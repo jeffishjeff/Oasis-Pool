@@ -8,15 +8,15 @@ Hook builders face a catch-22: Testing solely on testnets misses real-world vari
 
 ### Solution
 
-The Oasis Pool is a public-good Uniswap v4 environment seeded with stable assets and powered by a special Server Hook, which can host Guest Hooks one at a time and forwards the expected callbacks, enabling developers to validate behavior under real swap and gas conditions without bootstrapping liquidity or risking user experience. This PoC prioritizes single-guest and stable pairs only for safety and simplicity, with planned upgrades for multi-guests, volatile pairs, and additional features after validation.
+The Oasis Pool is a public-good Uniswap v4 environment seeded with stable assets and powered by a special Host Hook, which can host Guest Hooks one at a time and forwards the expected callbacks, enabling developers to validate behavior under real swap and gas conditions without bootstrapping liquidity or risking user experience. This PoC prioritizes single-guest and stable pairs only for safety and simplicity, with planned upgrades for multi-guests, volatile pairs, and additional features after validation.
 
 ### How It Works
 
-- Oasis PoolKey = {USDC, USDT, 0x800000, 1, ServerHook}
-- IServerHook is IHooks
+- Oasis PoolKey = {USDC, USDT, 0x800000, 1, HostHook}
+- IHostHook is IHooks
   - attach(): validate Guest Hook address then register it
   - detach(): remove registered Guest Hook
-- ServerHook is IServerHook
+- HostHook is IHostHook
   - address(this) & Hooks.ALL_HOOK_MASK == Hooks.ALL_HOOK_MASK
   - before/after(): forward to Guest Hook if it is expected, default value for lpFeeOverride is 0x400000
 
