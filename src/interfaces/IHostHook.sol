@@ -8,6 +8,21 @@ import {PoolKey} from "@uniswap-v4-core/types/PoolKey.sol";
 
 /// @notice Interface for the HostHook contract
 interface IHostHook is IHooks {
+    /// @notice Thrown when the host hook address is invalid
+    error InvalidHostHookAddress();
+    /// @notice Thrown when the guest hook address is invalid
+    error InvalidGuestHookAddress();
+    /// @notice Thrown when the pool key is invalid
+    error InvalidPoolKey();
+    /// @notice Thrown when the hook delta returned by guest hook is invalid
+    error InvalidHookDelta();
+    /// @notice Thrown when trying to attach a guest hook to an occupied pool
+    error PoolOccupied();
+    /// @notice Thrown when message sender is not the guest hook of the pool
+    error NotGuestHook();
+    /// @notice Thrown when message sender is not the pool manager
+    error NotPoolManager();
+
     /// @notice Emitted when a guest hook is attached to a pool
     /// @param poolId The pool identifier
     /// @param guestHook The guest hook that is attached
