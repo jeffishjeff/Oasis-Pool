@@ -23,6 +23,23 @@ interface IHostHook is IHooks {
     /// @notice Thrown when message sender is not the pool manager
     error NotPoolManager();
 
+    /// @notice Emitted when a guest hook call reverts with an empty reason
+    /// @param guestHook The guest hook that reverted
+    event RevertEmpty(IHooks guestHook);
+    /// @notice Emitted when a guest hook call reverts with a panic code
+    /// @param guestHook The guest hook that reverted
+    /// @param code The panic code
+    event RevertPanic(IHooks guestHook, uint256 code);
+    /// @notice Emitted when a guest hook call reverts with a string reason
+    /// @param guestHook The guest hook that reverted
+    /// @param reason The revert reason
+    event RevertString(IHooks guestHook, string reason);
+    /// @notice Emitted when a guest hook call reverts with a custom error
+    /// @param guestHook The guest hook that reverted
+    /// @param selector The selector of the custom error
+    /// @param data The data of the custom error
+    event RevertCustom(IHooks guestHook, bytes4 selector, bytes data);
+
     /// @notice Emitted when a guest hook is attached to a pool
     /// @param poolId The pool identifier
     /// @param guestHook The guest hook that is attached

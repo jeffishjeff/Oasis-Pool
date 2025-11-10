@@ -214,7 +214,19 @@ contract HostHook is IHostHook, Ownable2Step {
                 );
 
                 return (selector, hookDelta, lpFeeOverride);
-            } catch {}
+            } catch Panic(uint256 code) {
+                emit RevertPanic(guestHook, code);
+            } catch Error(string memory reason) {
+                emit RevertString(guestHook, reason);
+            } catch (bytes memory data) {
+                if (data.length == 0) {
+                    emit RevertEmpty(guestHook);
+                } else {
+                    bytes4 selector;
+                    assembly { selector := shr(224, mload(add(data, 32))) } // first 4 bytes
+                    emit RevertCustom(guestHook, selector, data);
+                }
+            }
         }
 
         return (this.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, 0);
@@ -242,7 +254,19 @@ contract HostHook is IHostHook, Ownable2Step {
                 );
 
                 return (selector, hookDelta);
-            } catch {}
+            } catch Panic(uint256 code) {
+                emit RevertPanic(guestHook, code);
+            } catch Error(string memory reason) {
+                emit RevertString(guestHook, reason);
+            } catch (bytes memory data) {
+                if (data.length == 0) {
+                    emit RevertEmpty(guestHook);
+                } else {
+                    bytes4 selector;
+                    assembly { selector := shr(224, mload(add(data, 32))) } // first 4 bytes
+                    emit RevertCustom(guestHook, selector, data);
+                }
+            }
         }
 
         return (this.afterSwap.selector, 0);
