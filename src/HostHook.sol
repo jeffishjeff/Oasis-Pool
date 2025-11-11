@@ -137,8 +137,8 @@ contract HostHook is IHostHook, Ownable2Step {
             require(
                 (hookDelta.amount0() <= 0 && hookDelta.amount1() <= 0)
                     || (hookData.length >= 32
-                        && abi.decode(hookData[hookData.length - 32:], (uint160))
-                            == Hooks.AFTER_ADD_LIQUIDITY_RETURNS_DELTA_FLAG),
+                        && abi.decode(hookData[hookData.length - 32:], (IHooks))
+                            .hasPermission(Hooks.AFTER_ADD_LIQUIDITY_RETURNS_DELTA_FLAG)),
                 InvalidHookDelta()
             );
 
@@ -181,8 +181,8 @@ contract HostHook is IHostHook, Ownable2Step {
             require(
                 (hookDelta.amount0() <= 0 && hookDelta.amount1() <= 0)
                     || (hookData.length >= 32
-                        && abi.decode(hookData[hookData.length - 32:], (uint160))
-                            == Hooks.AFTER_REMOVE_LIQUIDITY_RETURNS_DELTA_FLAG),
+                        && abi.decode(hookData[hookData.length - 32:], (IHooks))
+                            .hasPermission(Hooks.AFTER_REMOVE_LIQUIDITY_RETURNS_DELTA_FLAG)),
                 InvalidHookDelta()
             );
 
@@ -209,8 +209,8 @@ contract HostHook is IHostHook, Ownable2Step {
                 require(
                     (hookDelta.getSpecifiedDelta() <= 0 && hookDelta.getUnspecifiedDelta() <= 0)
                         || (hookData.length >= 32
-                            && abi.decode(hookData[hookData.length - 32:], (uint160))
-                                == (Hooks.BEFORE_SWAP_RETURNS_DELTA_FLAG | Hooks.AFTER_SWAP_RETURNS_DELTA_FLAG)),
+                            && abi.decode(hookData[hookData.length - 32:], (IHooks))
+                                .hasPermission(Hooks.BEFORE_SWAP_RETURNS_DELTA_FLAG)),
                     InvalidHookDelta()
                 );
 
@@ -249,8 +249,8 @@ contract HostHook is IHostHook, Ownable2Step {
                 require(
                     (hookDelta <= 0)
                         || (hookData.length >= 32
-                            && abi.decode(hookData[hookData.length - 32:], (uint160))
-                                == (Hooks.BEFORE_SWAP_RETURNS_DELTA_FLAG | Hooks.AFTER_SWAP_RETURNS_DELTA_FLAG)),
+                            && abi.decode(hookData[hookData.length - 32:], (IHooks))
+                                .hasPermission(Hooks.AFTER_SWAP_RETURNS_DELTA_FLAG)),
                     InvalidHookDelta()
                 );
 
