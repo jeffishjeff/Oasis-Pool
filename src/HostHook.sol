@@ -16,6 +16,7 @@ import {IHostHook} from "./interfaces/IHostHook.sol";
 contract HostHook is IHostHook, Ownable2Step {
     using Hooks for IHooks;
     using BeforeSwapDeltaLibrary for BeforeSwapDelta;
+    using LPFeeLibrary for uint24;
 
     IPoolManager public immutable poolManager;
     mapping(PoolId => IHooks) public guestHookOf;
@@ -41,7 +42,7 @@ contract HostHook is IHostHook, Ownable2Step {
     // ***************************
 
     /// @inheritdoc IHostHook
-    function attach(PoolKey memory poolKey, IHooks guestHook) external onlyOwner {
+    function attach(PoolKey memory poolKey, IHooks guestHook, uint24 fee) external onlyOwner {
         PoolId poolId = poolKey.toId();
         // only one guest hook can be attached to a pool at a time
         require(address(guestHookOf[poolId]) == address(0), PoolOccupied());
@@ -49,6 +50,7 @@ contract HostHook is IHostHook, Ownable2Step {
         require(guestHook.isValidHookAddress(poolKey.fee), InvalidGuestHookAddress());
 
         guestHookOf[poolId] = guestHook;
+        if (!fee.isDynamicFee()) poolManager.updateDynamicLPFee(poolKey, fee);
 
         emit Attachment(poolId, guestHook);
     }
@@ -81,7 +83,6 @@ contract HostHook is IHostHook, Ownable2Step {
         onlyPoolManager
         returns (bytes4)
     {
-        // pool must support dynamic fee, if guest hook expects fixed fee, call updateDynamicLPFee() in afterInitialize()
         require(key.fee == LPFeeLibrary.DYNAMIC_FEE_FLAG, InvalidPoolKey());
         IHooks guestHook = guestHookOf[key.toId()];
 
