@@ -133,12 +133,10 @@ contract HostHook is IHostHook, Ownable2Step {
             (bytes4 selector, BalanceDelta hookDelta) =
                 guestHook.afterAddLiquidity(sender, key, params, delta, feesAccrued, hookData);
 
-            // if guest hook took currency, the original caller must have explicitly allowed it by signaling via hookData
+            // if guest hook took currency, the original caller must have explicitly allowed it by signaling via the hookData
             require(
                 (hookDelta.amount0() <= 0 && hookDelta.amount1() <= 0)
-                    || (hookData.length >= 32
-                        && abi.decode(hookData[hookData.length - 32:], (IHooks))
-                            .hasPermission(Hooks.AFTER_ADD_LIQUIDITY_RETURNS_DELTA_FLAG)),
+                    || _permitPositiveHookDelta(hookData, Hooks.AFTER_ADD_LIQUIDITY_RETURNS_DELTA_FLAG),
                 InvalidHookDelta()
             );
 
@@ -177,12 +175,10 @@ contract HostHook is IHostHook, Ownable2Step {
             (bytes4 selector, BalanceDelta hookDelta) =
                 guestHook.afterRemoveLiquidity(sender, key, params, delta, feesAccrued, hookData);
 
-            // if guest hook took currency, the original caller must have explicitly allowed it by signaling via hookData
+            // if guest hook took currency, the original caller must have explicitly allowed it by signaling via the hookData
             require(
                 (hookDelta.amount0() <= 0 && hookDelta.amount1() <= 0)
-                    || (hookData.length >= 32
-                        && abi.decode(hookData[hookData.length - 32:], (IHooks))
-                            .hasPermission(Hooks.AFTER_REMOVE_LIQUIDITY_RETURNS_DELTA_FLAG)),
+                    || _permitPositiveHookDelta(hookData, Hooks.AFTER_REMOVE_LIQUIDITY_RETURNS_DELTA_FLAG),
                 InvalidHookDelta()
             );
 
@@ -205,12 +201,10 @@ contract HostHook is IHostHook, Ownable2Step {
             try guestHook.beforeSwap(sender, key, params, hookData) returns (
                 bytes4 selector, BeforeSwapDelta hookDelta, uint24 lpFeeOverride
             ) {
-                // if guest hook took currency, the original caller must have explicitly allowed it by signaling via hookData
+                // if guest hook took currency, the original caller must have explicitly allowed it by signaling via the hookData
                 require(
                     (hookDelta.getSpecifiedDelta() <= 0 && hookDelta.getUnspecifiedDelta() <= 0)
-                        || (hookData.length >= 32
-                            && abi.decode(hookData[hookData.length - 32:], (IHooks))
-                                .hasPermission(Hooks.BEFORE_SWAP_RETURNS_DELTA_FLAG)),
+                        || _permitPositiveHookDelta(hookData, Hooks.BEFORE_SWAP_RETURNS_DELTA_FLAG),
                     InvalidHookDelta()
                 );
 
@@ -245,12 +239,9 @@ contract HostHook is IHostHook, Ownable2Step {
 
         if (guestHook.hasPermission(Hooks.AFTER_SWAP_FLAG)) {
             try guestHook.afterSwap(sender, key, params, delta, hookData) returns (bytes4 selector, int128 hookDelta) {
-                // if guest hook took currency, the original caller must have explicitly allowed it by signaling via hookData
+                // if guest hook took currency, the original caller must have explicitly allowed it by signaling via the hookData
                 require(
-                    (hookDelta <= 0)
-                        || (hookData.length >= 32
-                            && abi.decode(hookData[hookData.length - 32:], (IHooks))
-                                .hasPermission(Hooks.AFTER_SWAP_RETURNS_DELTA_FLAG)),
+                    hookDelta <= 0 || _permitPositiveHookDelta(hookData, Hooks.AFTER_SWAP_RETURNS_DELTA_FLAG),
                     InvalidHookDelta()
                 );
 
@@ -301,5 +292,12 @@ contract HostHook is IHostHook, Ownable2Step {
         return guestHook.hasPermission(Hooks.AFTER_DONATE_FLAG)
             ? guestHook.afterDonate(sender, key, amount0, amount1, hookData)
             : this.afterDonate.selector;
+    }
+
+    function _permitPositiveHookDelta(bytes calldata hookData, uint160 permission) internal pure returns (bool) {
+        // original caller must have explicitly allowed it by signaling via an extra word in the hookData
+        // doesn't need to be IHooks, just casting to use hasPermission() for convenience
+        // generally it's easiest to append the guest hook address itself to permit positive hook deltas
+        return hookData.length >= 32 && abi.decode(hookData[hookData.length - 32:], (IHooks)).hasPermission(permission);
     }
 }
